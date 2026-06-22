@@ -21,6 +21,7 @@ type settingsData struct {
 	Tus                   settings.Tus          `json:"tus"`
 	Shell                 []string              `json:"shell"`
 	Commands              map[string][]string   `json:"commands"`
+	EnableWebDAV          bool                  `json:"enableWebDAV"`
 }
 
 var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
@@ -37,8 +38,8 @@ var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, 
 		Tus:                   d.settings.Tus,
 		Shell:                 d.settings.Shell,
 		Commands:              d.settings.Commands,
+		EnableWebDAV:          d.settings.EnableWebDAV,
 	}
-
 	return renderJSON(w, r, data)
 })
 
@@ -48,7 +49,6 @@ var settingsPutHandler = withAdmin(func(_ http.ResponseWriter, r *http.Request, 
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
-
 	d.settings.Signup = req.Signup
 	d.settings.CreateUserDir = req.CreateUserDir
 	d.settings.MinimumPasswordLength = req.MinimumPasswordLength
@@ -60,7 +60,7 @@ var settingsPutHandler = withAdmin(func(_ http.ResponseWriter, r *http.Request, 
 	d.settings.Shell = req.Shell
 	d.settings.Commands = req.Commands
 	d.settings.HideLoginButton = req.HideLoginButton
-
+	d.settings.EnableWebDAV = req.EnableWebDAV
 	err = d.store.Settings.Save(d.settings)
 	return errToStatus(err), err
 })
