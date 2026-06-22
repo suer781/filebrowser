@@ -11,9 +11,9 @@ import (
 )
 
 type modifyRequest struct {
-	What            string   `json:"what"`             // Answer to: what data type?
-	Which           []string `json:"which"`            // Answer to: which fields?
-	CurrentPassword string   `json:"current_password"` // Answer to: user logged password
+	What            string   `json:"what"`
+	Which           []string `json:"which"`
+	CurrentPassword string   `json:"current_password"`
 }
 
 func NewHandler(
@@ -41,37 +41,60 @@ func NewHandler(
 
 	r.HandleFunc("/health", healthHandler)
 	r.PathPrefix("/static").Handler(static)
+	r.PathPrefix("/webdav").Handler(monkey(webDavHandler, ""))
 	r.NotFoundHandler = index
 
 	api := r.PathPrefix("/api").Subrouter()
 
-	tokenExpirationTime := server.GetTokenExpirationTime(DefaultTokenExpirationTime)
-	api.Handle("/login", monkey(loginHandler(tokenExpirationTime), ""))
-	api.Handle("/signup", monkey(signupHandler, ""))
-	api.Handle("/renew", monkey(renewHandler(tokenExpirationTime), ""))
+	tokenExpirationTime := server.GetTokenExpirationTime(DefaultTokenExpiration)
+	authHandler := &auth.Handler{
+		ExtractToken: auth.ExtractToken,
+		RevokeToken:  auth.RevokeToken,
+		RevokeAll:    auth.RevokeAllUserTokens,
+		KeyFunc: func() (interface{}, error) {
+			return server.Key, nil
+		},
+		TokenExpirationTime: tokenExpirationTime,
+		Method:              server.AuthMethod,
+		Hook:                server.AuthHook,
+	}
 
-	users := api.PathPrefix("/users").Subrouter()
-	users.Handle("", monkey(usersGetHandler, "")).Methods("GET")
-	users.Handle("", monkey(userPostHandler, "")).Methods("POST")
-	users.Handle("/{id:[0-9]+}", monkey(userPutHandler, "")).Methods("PUT")
-	users.Handle("/{id:[0-9]+}", monkey(userGetHandler, "")).Methods("GET")
-	users.Handle("/{id:[0-9]+}", monkey(userDeleteHandler, "")).Methods("DELETE")
+	api.Use(authHandler.Middleware)
 
-	api.PathPrefix("/resources/recursive").Handler(monkey(resourceGetRecursiveHandler, "/api/resources/recursive")).Methods("GET")
-	api.PathPrefix("/resources").Handler(monkey(resourceGetHandler, "/api/resources")).Methods("GET")
-	api.PathPrefix("/resources").Handler(monkey(resourceDeleteHandler(fileCache), "/api/resources")).Methods("DELETE")
-	api.PathPrefix("/resources").Handler(monkey(resourcePostHandler(fileCache), "/api/resources")).Methods("POST")
-	api.PathPrefix("/resources").Handler(monkey(resourcePutHandler, "/api/resources")).Methods("PUT")
-	api.PathPrefix("/resources").Handler(monkey(resourcePatchHandler(fileCache), "/api/resources")).Methods("PATCH")
+	api.HandleFunc("/login", loginHandler).Methods("GET")
+	api.Path("/login").HandlerFunc(makeAuthHandler(auth.MethodJSONAuth)).Methods("POST")
+	api.Path("/signup").HandlerFunc(signupHandler).Methods("POST")
+	api.Path("/renew").HandlerFunc(renewHandler).Methods("GET")
 
-	api.PathPrefix("/tus").Handler(monkey(tusPostHandler(uploadCache), "/api/tus")).Methods("POST")
-	api.PathPrefix("/tus").Handler(monkey(tusHeadHandler(uploadCache), "/api/tus")).Methods("HEAD", "GET")
-	api.PathPrefix("/tus").Handler(monkey(tusPatchHandler(uploadCache), "/api/tus")).Methods("PATCH")
-	api.PathPrefix("/tus").Handler(monkey(tusDeleteHandler(uploadCache), "/api/tus")).Methods("DELETE")
+	api.Path("/settings").Handler(monkey(settingsGetHandler, "")).Methods("GET")
+	api.Path("/settings").Handler(monkey(settingsPutHandler, "")).Methods("PUT")
 
-	api.PathPrefix("/usage").Handler(monkey(diskUsage, "/api/usage")).Methods("GET")
+	api.Path("/users").Handler(monkey(usersGetHandler, "")).Methods("GET")
+	api.Path("/users/{id}" ).Handler(monkey(userGetHandler, "")).Methods("GET")
+	api.Path("/users" ).Handler(monkey(userPostHandler, "")).Methods("POST")
+	api.Path("/users/{id}" ).Handler(monkey(userPutHandler, "")).Methods("PUT")
+	api.Path("/users/{id}" ).Handler(monkey(userDeleteHandler, "")).Methods("DELETE")
 
-	api.Handle("/shares", monkey(shareListHandler, "")).Methods("GET")
+	api.PathPrefix("/files").Handler(monkey(filesHandler, "/api/files")).Methods("GET")
+	api.PathPrefix("/files").Handler(monkey(resourcePostHandler, "/api/files")).Methods("POST")
+	api.PathPrefix("/files").Handler(monkey(resourcePutHandler, "/api/files")).Methods("PUT")
+	api.PathPrefix("/files").Handler(monkey(resourcePatchHandler, "/api/files")).Methods("PATCH")
+	api.PathPrefix("/files").Handler(monkey(resourceDeleteHandler, "/api/files")).Methods("DELETE")
+
+	api.PathPrefix("/tus").Handler(monkey(tusHandler, "/api/tus")).Methods("OPTIONS")
+	api.PathPrefix("/tus").Handler(monkey(tusHandler, "/api/tus")).Methods("POST", "HEAD", "PATCH", "DELETE")
+
+	api.Path("/resources").Handler(monkey(resourceGetHandler, "")).Methods("GET")
+	api.PathPrefix("/preview").Handler(monkey(previewHandler(imgSvc, fileCache, server.EnableThumbnails, server.ResizePreview), "/api/preview")).Methods("GET")
+	api.PathPrefix("/raw").Handler(monkey(rawHandler, "/api/raw")).Methods("GET")
+	api.PathPrefix("/download").Handler(monkey(downloadHandler, "/api/download")).Methods("GET")
+
+	api.PathPrefix("/search").Handler(monkey(searchHandler, "/api/search")).Methods("GET")
+	api.PathPrefix("/resources").Handler(monkey(resourcesHandler, "/api/resources")).Methods("GET")
+
+	api.Path("/usage").Handler(monkey(usageHandler, "")).Methods("GET")
+
+	api.Path("/shares").Handler(monkey(shareListHandler, "")).Methods("GET")
 	api.PathPrefix("/share").Handler(monkey(shareGetsHandler, "/api/share")).Methods("GET")
 	api.PathPrefix("/share").Handler(monkey(sharePostHandler, "/api/share")).Methods("POST")
 	api.PathPrefix("/share").Handler(monkey(shareDeleteHandler, "/api/share")).Methods("DELETE")
