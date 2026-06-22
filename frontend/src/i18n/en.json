@@ -29,8 +29,6 @@
     "rename": "Rename",
     "replace": "Replace",
     "reportIssue": "Report Issue",
-    "resumeTransfer": "Resume previous transfer",
-    "resumeTransferTooltip": "Skip all conflicting files, except the ones that are smaller on the server as we suppose that their transfert has been interrupted.",
     "save": "Save",
     "schedule": "Schedule",
     "search": "Search",
@@ -50,11 +48,7 @@
     "saveChanges": "Save changes",
     "editAsText": "Edit as Text",
     "increaseFontSize": "Increase font size",
-    "decreaseFontSize": "Decrease font size",
-    "overrideAll": "Replace all files in destination folder",
-    "skipAll": "Skip all conflicting files",
-    "renameAll": "Rename all files (create a copy)",
-    "singleDecision": "Decide for each conflicting file"
+    "decreaseFontSize": "Decrease font size"
   },
   "download": {
     "downloadFile": "Download File",
@@ -167,19 +161,7 @@
     "uploadMessage": "Select an option to upload.",
     "optionalPassword": "Optional password",
     "resolution": "Resolution",
-    "discardEditorChanges": "Are you sure you wish to discard the changes you've made?",
-    "replaceOrSkip": "Replace or skip files",
-    "resolveConflict": "Which files do you want to keep?",
-    "singleConflictResolve": "If you select both versions, a number will be added to the name of the copied file.",
-    "fastConflictResolve": "The destination folder there are {count} files with same name.",
-    "uploadingFiles": "Uploading files",
-    "filesInOrigin": "Files in origin",
-    "filesInDest": "Files in destination",
-    "override": "Overwrite",
-    "skip": "Skip",
-    "forbiddenError": "Forbidden Error",
-    "currentPassword": "Your password",
-    "currentPasswordMessage": "Enter your password to validate this action."
+    "discardEditorChanges": "Are you sure you wish to discard the changes you've made?"
   },
   "search": {
     "images": "Images",
@@ -215,6 +197,10 @@
     "tusUploadsHelp": "File Browser supports chunked file uploads, allowing for the creation of efficient, reliable, resumable and chunked file uploads even on unreliable networks.",
     "tusUploadsChunkSize": "Indicates to maximum size of a request (direct uploads will be used for smaller uploads). You may input a plain integer denoting byte size input or a string like 10MB, 1GB etc.",
     "tusUploadsRetryCount": "Number of retries to perform if a chunk fails to upload.",
+    "webdav": "WebDAV",
+    "enableWebDAV": "Enable WebDAV",
+    "webdavURL": "Your WebDAV URL is:",
+    "webdavPasswordHint": "(your login password)",
     "userHomeBasePath": "Base path for user home directories",
     "userScopeGenerationPlaceholder": "The scope will be auto generated",
     "createUserHomeDirectory": "Create user home directory",
@@ -247,7 +233,7 @@
       "execute": "Execute commands",
       "modify": "Edit files",
       "rename": "Rename or move files and directories",
-      "share": "Share files (require download permission)"
+      "share": "Share files"
     },
     "permissions": "Permissions",
     "permissionsHelp": "You can set the user to be an administrator or choose the permissions individually. If you select \"Administrator\", all of the other options will be automatically checked. The management of users remains a privilege of an administrator.\n",
@@ -283,7 +269,6 @@
     "currentPassword": "Your Current Password"
   },
   "sidebar": {
-    "diskUsed": "{used} of {total} used",
     "help": "Help",
     "hugoNew": "Hugo New",
     "login": "Login",

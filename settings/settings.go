@@ -16,8 +16,10 @@ const DefaultMinimumPasswordLength = 12
 const DefaultFileMode = 0640
 const DefaultDirMode = 0750
 
+// AuthMethod describes an authentication method.
 type AuthMethod string
 
+// Settings contain the main settings of the application.
 type Settings struct {
 	Key                   []byte              `json:"key"`
 	Signup                bool                `json:"signup"`
@@ -35,57 +37,35 @@ type Settings struct {
 	MinimumPasswordLength uint                `json:"minimumPasswordLength"`
 	FileMode              fs.FileMode         `json:"fileMode"`
 	DirMode               fs.FileMode         `json:"dirMode"`
+	HideDotfiles          bool                `json:"hideDotfiles"`
 	EnableWebDAV          bool                `json:"enableWebDAV"`
 }
 
-type Branding struct {
-	Name        string `json:"name"`
-	DisableExternal bool `json:"disableExternal"`
+// GetRules implements rules.Provider.
+func (s *Settings) GetRules() []rules.Rule {
+	return s.Rules
 }
 
-type UserDefaults struct {
-	Mode         uint8  `json:"mode"`
-	Locale       string `json:"locale"`
-	ShowHidden    bool   `json:"showHidden"`
-	SingleClick  bool   `json:"singleClick"`
-	Sorting      string `json:"sorting"`
-	Perm         UserPermissions `json:"perm"`
-}
-
-type UserPermissions struct {
-	Admin    bool `json:"admin"`
-	Execute  bool `json:"execute"`
-	Create   bool `json:"create"`
-	Rename   bool `json:"rename"`
-	Modify   bool `json:"modify"`
-	Delete   bool `json:"delete"`
-	Share    bool `json:"share"`
-	Download bool `json:"download"`
-}
-
-type Tus struct {
-	ChunkSize int64  `json:"chunkSize"`
-	Resumable bool   `json:"resumable"`
-	DataDir   string `json:"dataDir"`
-}
-
+// Server specific settings.
 type Server struct {
-	BaseURL              string `json:"baseURL"`
-	Socket               string `json:"socket"`
-	TLSKey               string `json:"tlsKey"`
-	TLSCert              string `json:"tlsCert"`
-	Port                 string `json:"port"`
-	Address              string `json:"address"`
-	Log                  string `json:"log"`
-	EnableThumbnails     bool   `json:"enableThumbnails"`
-	ResizePreview        bool   `json:"resizePreview"`
-	EnableExec           bool   `json:"enableExec"`
-	TypeDetectionByHeader bool  `json:"typeDetectionByHeader"`
-	ImageResolutionCal   bool   `json:"imageResolutionCalculation"`
-	AuthHook             string `json:"authHook"`
-	TokenExpirationTime  string `json:"tokenExpirationTime"`
+	Root                  string `json:"root"`
+	BaseURL               string `json:"baseURL"`
+	Socket                string `json:"socket"`
+	TLSKey                string `json:"tlsKey"`
+	TLSCert               string `json:"tlsCert"`
+	Port                  string `json:"port"`
+	Address               string `json:"address"`
+	Log                   string `json:"log"`
+	EnableThumbnails      bool   `json:"enableThumbnails"`
+	ResizePreview         bool   `json:"resizePreview"`
+	EnableExec            bool   `json:"enableExec"`
+	TypeDetectionByHeader bool   `json:"typeDetectionByHeader"`
+	ImageResolutionCal    bool   `json:"imageResolutionCalculation"`
+	AuthHook              string `json:"authHook"`
+	TokenExpirationTime   string `json:"tokenExpirationTime"`
 }
 
+// Clean cleans any variables that might need cleaning.
 func (s *Server) Clean() {
 	s.BaseURL = strings.TrimSuffix(s.BaseURL, "/")
 }
@@ -94,6 +74,7 @@ func (s *Server) GetTokenExpirationTime(fallback time.Duration) time.Duration {
 	if s.TokenExpirationTime == "" {
 		return fallback
 	}
+
 	duration, err := time.ParseDuration(s.TokenExpirationTime)
 	if err != nil {
 		log.Printf("[WARN] Failed to parse tokenExpirationTime: %v", err)
@@ -102,11 +83,14 @@ func (s *Server) GetTokenExpirationTime(fallback time.Duration) time.Duration {
 	return duration
 }
 
+// GenerateKey generates a key of 512 bits.
 func GenerateKey() ([]byte, error) {
 	b := make([]byte, 64)
 	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
 	if err != nil {
 		return nil, err
 	}
+
 	return b, nil
 }

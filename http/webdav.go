@@ -54,9 +54,14 @@ func webDavHandler(w http.ResponseWriter, r *http.Request, d *data) (int, error)
 		return http.StatusUnauthorized, nil
 	}
 
+	// TODO: Verify permissions?
+	// For now, we assume if you can login, you can WebDAV.
+	// But we might want to respect ReadOnly, etc.
+	// Check methods?
+
 	switch r.Method {
 	case "PUT", "DELETE", "MKCOL", "COPY", "MOVE":
-		if !user.Perm.Modify {
+		if !user.Perm.Modify { // modify includes delete? renaming?
 			return http.StatusForbidden, nil
 		}
 	}
